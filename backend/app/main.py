@@ -55,3 +55,17 @@ def health_check() -> dict[str, str]:
     """
 
     return {"status": "ok"}
+
+
+
+
+@app.get("/version")
+def get_version() -> dict[str, str]:
+    """
+    Return the current application version.
+
+    A version endpoint can help developers and deployment systems
+    identify which release of the application is currently running.
+    """
+
+    return {"version": "0.1.0"}

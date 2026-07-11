@@ -55,3 +55,21 @@ def test_health_check() -> None:
     assert response.json() == {
         "status": "ok"
     }
+
+
+
+def test_get_version() -> None:
+    """
+    Confirm that the version endpoint returns the expected version.
+    """
+
+    # Send a simulated GET request to the version endpoint.
+    response = client.get("/version")
+
+    # The endpoint should respond successfully.
+    assert response.status_code == 200
+
+    # Confirm that the API returns the expected application version.
+    assert response.json() == {
+        "version": "0.1.0"
+    }
