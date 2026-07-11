@@ -1,0 +1,20 @@
+# Python virtual environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Pytest-generated cache
+.pytest_cache/
+
+# Test coverage files
+.coverage
+htmlcov/
+
+# Environment variables
+.env
+
+# VS Code settings
+.vscode/
