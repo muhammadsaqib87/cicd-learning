@@ -84,7 +84,7 @@ permissions:
 # configured with "needs".
 jobs:
 
-  # ----------------------------------------------------------
+  # -----------------------------------------------------------
   # Backend testing job
   # ----------------------------------------------------------
   # "backend-tests" is the internal identifier for this job.
