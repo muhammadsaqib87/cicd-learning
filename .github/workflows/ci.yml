@@ -1,0 +1,103 @@
+# Name displayed in the GitHub Actions interface.
+name: Full-stack CI
+
+# Events that start this workflow.
+on:
+  # Run after code is pushed to development or production.
+  push:
+    branches:
+      - dev
+      - main
+
+  # Run when proposed changes target the production branch.
+  pull_request:
+    branches:
+      - main
+
+  # Allow manual execution from the Actions page.
+  workflow_dispatch:
+
+# The workflow only needs permission to read repository files.
+permissions:
+  contents: read
+
+jobs:
+  # ------------------------------------------------------------
+  # BACKEND JOB
+  # ------------------------------------------------------------
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    # All shell commands in this job start inside backend/.
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      # Download the repository onto the temporary GitHub runner.
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      # Install Python and cache downloaded pip packages.
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      # Display the version in the workflow log.
+      - name: Show Python version
+        run: python --version
+
+      # Install the backend dependencies.
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      # Run all FastAPI tests.
+      - name: Run backend tests
+        run: python -m pytest -v
+
+  # ------------------------------------------------------------
+  # FRONTEND JOB
+  # ------------------------------------------------------------
+  frontend-checks:
+    runs-on: ubuntu-latest
+
+    # All shell commands in this job start inside frontend/.
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      # Download the same repository onto another runner.
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      # Install Node.js and cache npm's downloaded packages.
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Display Node.js and npm versions in the log.
+      - name: Show Node.js versions
+        run: |
+          node --version
+          npm --version
+
+      # Install the exact versions recorded in package-lock.json.
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # Check TypeScript and React source rules.
+      - name: Lint frontend
+        run: npm run lint
+
+      # Compile TypeScript and create production files.
+      - name: Build frontend
+        run: npm run build
