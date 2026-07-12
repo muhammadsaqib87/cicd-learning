@@ -1,16 +1,17 @@
 """
 Main FastAPI application.
 
-This module creates the API and defines its HTTP endpoints.
+This module:
+- Creates the FastAPI application
+- Configures browser access through CORS
+- Defines the root, health, and version endpoints
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 
-# Create the FastAPI application object.
-#
-# Uvicorn imports this variable when it starts the server.
-# Our automated tests will import this exact same object.
+# Create the FastAPI application.
 app = FastAPI(
     title="Student CI/CD Application",
     description=(
@@ -21,18 +22,40 @@ app = FastAPI(
 )
 
 
+# These are the frontend addresses permitted to call this API
+# from JavaScript running in a web browser.
+#
+# localhost and 127.0.0.1 both refer to your computer, but the
+# browser treats them as different hostnames, so we include both.
+allowed_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+
+# CORS means Cross-Origin Resource Sharing.
+#
+# This middleware adds the HTTP headers that tell the browser:
+# "Requests from our React development server are allowed."
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+
+    # We are not using login cookies or authorization credentials yet.
+    allow_credentials=False,
+
+    # Our frontend currently sends only GET requests.
+    allow_methods=["GET"],
+
+    # Permit normal request headers.
+    allow_headers=["*"],
+)
+
+
 @app.get("/")
 def read_root() -> dict[str, str]:
     """
-    Return a welcome message from the backend.
-
-    HTTP request:
-        GET /
-
-    JSON response:
-        {
-            "message": "Hello from FastAPI!"
-        }
+    Return a simple welcome message.
     """
 
     return {"message": "Hello from FastAPI!"}
@@ -41,31 +64,16 @@ def read_root() -> dict[str, str]:
 @app.get("/health")
 def health_check() -> dict[str, str]:
     """
-    Report whether the application is responding.
-
-    Health endpoints are commonly checked by:
-    - Automated tests
-    - Docker
-    - CI/CD pipelines
-    - Deployment platforms
-    - Monitoring systems
-
-    This simple health check confirms that FastAPI can receive
-    and answer an HTTP request.
+    Report whether the backend application is responding.
     """
 
     return {"status": "ok"}
 
 
-
-
 @app.get("/version")
 def get_version() -> dict[str, str]:
     """
-    Return the current application version.
-
-    A version endpoint can help developers and deployment systems
-    identify which release of the application is currently running.
+    Return the current backend application version.
     """
 
     return {"version": "0.1.0"}

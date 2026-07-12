@@ -73,3 +73,29 @@ def test_get_version() -> None:
     assert response.json() == {
         "version": "0.1.0"
     }
+
+
+def test_cors_allows_react_development_server() -> None:
+    """
+    Confirm that FastAPI allows requests from the React dev server.
+
+    Browsers send an OPTIONS preflight request before some
+    cross-origin requests. CORSMiddleware answers that request.
+    """
+
+    response = client.options(
+        "/health",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+
+    # The CORS preflight request should succeed.
+    assert response.status_code == 200
+
+    # FastAPI should explicitly allow the React origin.
+    assert (
+        response.headers["access-control-allow-origin"]
+        == "http://localhost:5173"
+    )
