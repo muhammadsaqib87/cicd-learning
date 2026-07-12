@@ -41,21 +41,10 @@ def read_root() -> dict[str, str]:
 @app.get("/health")
 def health_check() -> dict[str, str]:
     """
-    Report whether the application is responding.
-
-    Health endpoints are commonly checked by:
-    - Automated tests
-    - Docker
-    - CI/CD pipelines
-    - Deployment platforms
-    - Monitoring systems
-
-    This simple health check confirms that FastAPI can receive
-    and answer an HTTP request.
+    Deliberately incorrect response used to test our CI pipeline.
     """
 
-    return {"status": "ok"}
-
+    return {"status": "broken"}
 
 
 
