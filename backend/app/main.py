@@ -54,7 +54,7 @@ def health_check() -> dict[str, str]:
     and answer an HTTP request.
     """
 
-    return {"status": "ok"}
+    return {"status": "Broken"}
 
 
 
