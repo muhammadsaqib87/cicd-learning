@@ -1,0 +1,28 @@
+# Local Python virtual environment
+.venv/
+
+# Python-generated files
+__pycache__/
+*.pyc
+*.pyo
+
+# Test-generated files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local secrets
+.env
+.env.*
+
+# Git metadata
+.git/
+.gitignore
+
+# Editor files
+.vscode/
+.idea/
+
+# Operating-system files
+Thumbs.db
+.DS_Store
