@@ -101,3 +101,102 @@ jobs:
       # Compile TypeScript and create production files.
       - name: Build frontend
         run: npm run build
+
+
+  # ------------------------------------------------------------
+  # BACKEND DOCKER IMAGE JOB
+  # ------------------------------------------------------------
+  backend-image:
+    # Do not build the image when the Python tests have failed.
+    needs:
+      - backend-tests
+
+    runs-on: ubuntu-latest
+
+    steps:
+      # Download the repository onto the GitHub runner.
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      # Create a Docker Buildx builder.
+      #
+      # Buildx uses Docker BuildKit and supports features such as
+      # build caching and multi-platform images.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Build the FastAPI image but do not publish it.
+      #
+      # load: true imports the completed image into the runner's
+      # local Docker engine so later steps can run the container.
+      - name: Build backend Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          load: true
+          push: false
+          tags: cicd-backend:ci
+
+          # Reuse Docker build layers between workflow runs.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Start the newly built image as a background container.
+      - name: Start backend container
+        run: |
+          docker run \
+            --detach \
+            --name cicd-backend-ci \
+            --publish 8000:8000 \
+            cicd-backend:ci
+
+      # Wait for FastAPI to start and then verify its health response.
+      #
+      # The loop tries up to 20 times, waiting two seconds each time.
+      # This is safer than assuming the web server starts immediately.
+      - name: Test container health endpoint
+        run: |
+          for attempt in {1..20}; do
+            echo "Health-check attempt ${attempt}"
+
+            if curl \
+              --fail \
+              --silent \
+              http://127.0.0.1:8000/health \
+              | grep --quiet '"status":"ok"'; then
+              echo "Backend container is healthy."
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          echo "The backend container did not become healthy."
+          docker logs cicd-backend-ci
+          exit 1
+
+      # Verify the web application is not running as Linux root.
+      - name: Verify non-root container user
+        run: |
+          user_id="$(docker exec cicd-backend-ci id -u)"
+          user_details="$(docker exec cicd-backend-ci id)"
+
+          echo "Container user: ${user_details}"
+
+          if [ "${user_id}" = "0" ]; then
+            echo "The application is running as root."
+            exit 1
+          fi
+
+          echo "The application is running as a non-root user."
+
+      # Display useful logs and remove the test container.
+      #
+      # if: always() means this cleanup runs even if an earlier
+      # container test failed.
+      - name: Show logs and clean up
+        if: always()
+        run: |
+          docker logs cicd-backend-ci || true
+          docker rm --force cicd-backend-ci || true
